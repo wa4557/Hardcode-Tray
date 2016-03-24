@@ -210,11 +210,8 @@ def get_correct_chrome_icons(apps_infos,
             extract_folder = path.dirname(extracted)+"/"+app_icons[i-j][3]
             if not path.isdir(extract_folder):
                 create_dir(extract_folder)
-            print(dummy_pak != pak_file)
             if dummy_pak != pak_file:
-                print(pak_file)
                 copy_file(apps_infos["path"] + pak_file, dirname + pak_file, True)
-                print(extract_folder)
                 copy_file(dirname + "data_pack.py", extract_folder+"/data_pack.py", True)
                 make_executable(extract_folder+"/data_pack.py")
                 create_dir(path.dirname(extract_folder))
@@ -225,7 +222,7 @@ def get_correct_chrome_icons(apps_infos,
                 if compare_two_images(default_path, icon_path):
                     app_icons[i-j][0] = default_icon
                     been_found = True
-            if not been_found and bool(int(app_icons[i-j][4])):
+            if not been_found:
                 del app_icons[i-j]
                 j += 1
         k = i-j+1
@@ -432,8 +429,6 @@ def install(fix_only):
             if app_dbfile in ("google-chrome", "chromium"):
                 pak_file = app_icons[0][3]
                 apps[app]["icons"] = get_correct_chrome_icons(apps[app], pak_file)
-                print(apps[app]["icons"])
-                exit()
                 dont_install = not apps[app]["icons"]
             icon_ctr = 1
             while icon_ctr <= len(app_icons) and not dont_install:
@@ -525,15 +520,15 @@ def install(fix_only):
                                             "%s -- script file does not exists" % sfile)
                             else:
                                 if path.isfile(sfile):
-                                    backup(app_path + icon[3])
                                     if icon_ctr == 1:
                                         do = 0
                                     elif icon_ctr == len(app_icons):
                                         do = -1
                                     else:
                                         do = 1
+                                    backup(app_path + icon[3])
                                     execute([sfile, fname, symlink_icon,
-                                             app_path, str(do), icon[3]])
+                                             app_path, icon[3], str(do)])
                                 else:
                                     print(
                                         "%s -- script file does not exists" % sfile)
@@ -546,7 +541,8 @@ def install(fix_only):
 
     else:
         exit("No apps to fix! Please report on GitHub if this is not the case")
-
+    if path.isdir(extracted):
+        rmtree(extracted)
 
 if __name__=="__main__":
     if detect_de() in ("pantheon", "xfce"):

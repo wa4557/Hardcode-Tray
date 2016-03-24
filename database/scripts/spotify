@@ -1,24 +1,26 @@
 #!/bin/bash
 cd ./database/scripts/
+extract_fold="extracted/resources"
+echo $1
+echo $2
+echo $3
+echo $4
+echo $5
 
-if [ "$4" -eq 0 ]; then
-    rm -f resources_old.zip
-    rm -rf resources_old 
-    cp $3/resources.zip resources_old.zip
-    unzip resources_old.zip -d resources_old/
+exit
+if [ -d "$extract_fold" ]; then
+    mkdir -p "$extract_fold"
+    unzip $3/resources.zip -d "$extract_fold"
 fi
 
 if [[ $1 == *.svg ]]; then
-    python3 svgtopng.py $1 resources_old/_linux/$2
+    python3 svgtopng.py $1 "$extract_fold"/_linux/$2
 else
-    cp $1 resources_old/_linux/$2
+    cp $1 "$extract_fold"/_linux/$2
 fi
 
-if [ "$4" -eq -1 ]; then
-    cd resources_old/
+if [ "$5" -eq -1 ]; then
+    cd "$extract_fold"
     zip -r resources_patched.zip .
     mv resources_patched.zip $3/resources.zip
-    cd ./..
-    rm -f resources_old.zip
-    rm -rf resources_old 
 fi

@@ -1,6 +1,12 @@
 #!/bin/bash
 cd ./database/scripts/
-mkdir -p extracted
+
+echo $1
+echo $2
+echo $3
+echo $4
+echo $5
+exit
 
 if [[ $1 == *.svg ]]; then
     python3 svgtopng.py $1 $(echo $2 | cut -f 1 -d '.')
@@ -8,9 +14,8 @@ else
     cp $1 $(echo $2 | cut -f 1 -d '.')
 fi
 
-./data_pack.py $5 $(echo $2 | cut -f 1 -d '.')
+./data_pack.py $4 $(echo $2 | cut -f 1 -d '.')
 
-if [ "$4" -eq -1 ]; then
+if [ "$5" -eq -1 ]; then
     mv $5 $3/$5
-    rm -rf ./extracted
 fi
