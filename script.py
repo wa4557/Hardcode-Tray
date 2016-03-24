@@ -14,7 +14,7 @@ from csv import reader
 from hashlib import md5
 from imp import load_source
 from os import (chown, environ, getenv, geteuid, listdir, makedirs,
-                path, remove, symlink)
+                path, remove, symlink, stat, chmod)
 from shutil import copyfile, move, rmtree
 from subprocess import PIPE, Popen, call, check_output
 from sys import argv, exit
@@ -79,6 +79,10 @@ def detect_de():
         except (OSError, RuntimeError):
             return "other"
 
+def make_executable(path):
+    mode = stat(path).st_mode
+    mode |= (mode & 0o444) >> 2
+    chmod(path, mode)
 
 def get_subdirs(directory):
     """
@@ -197,19 +201,27 @@ def get_correct_chrome_icons(apps_infos,
     dirname = absolute_path + db_folder + script_folder
     extracted = dirname + "extracted/"
     app_icons = apps_infos["icons"]
+    dummy_pak = ''
     j = 0
     for i in range(len(app_icons)):
         if path.isfile(apps_infos["path"] + pak_file):
             icon_path = images_dir + app_icons[i-j][1] + ".png"
             been_found = False
-            if app_icons[i-j][3] != pak_file or not path.isdir(extracted):
+            extract_folder = path.dirname(extracted)+"/"+app_icons[i-j][3]
+            if not path.isdir(extract_folder):
+                create_dir(extract_folder)
+            print(dummy_pak != pak_file)
+            if dummy_pak != pak_file:
+                print(pak_file)
                 copy_file(apps_infos["path"] + pak_file, dirname + pak_file, True)
-                if path.isdir(extracted):
-                    rmtree(extracted)
-                create_dir(path.dirname(extracted))
-                execute([dirname + "data_pack.py", dirname + pak_file])
-            for default_icon in listdir(extracted):
-                default_path = extracted + default_icon
+                print(extract_folder)
+                copy_file(dirname + "data_pack.py", extract_folder+"/data_pack.py", True)
+                make_executable(extract_folder+"/data_pack.py")
+                create_dir(path.dirname(extract_folder))
+                execute([extract_folder + "/data_pack.py", dirname + pak_file])
+                dummy_pak = pak_file
+            for default_icon in listdir(extract_folder):
+                default_path = extract_folder +"/"+ default_icon
                 if compare_two_images(default_path, icon_path):
                     app_icons[i-j][0] = default_icon
                     been_found = True
@@ -219,8 +231,7 @@ def get_correct_chrome_icons(apps_infos,
         k = i-j+1
         if k < len(app_icons) and app_icons[k][3] != pak_file:
             pak_file = app_icons[k][3]
-    if path.exists(extracted):
-        rmtree(extracted)
+        
     return (app_icons if len(app_icons) > 0 else None)
     
 
@@ -407,6 +418,10 @@ def install(fix_only):
         Installs the new supported icons
     """
     apps = get_apps_informations(fix_only)
+    dirname = absolute_path + db_folder + script_folder
+    extracted = dirname + "extracted/"
+    if path.isdir(extracted):
+        rmtree(extracted)
     if len(apps) != 0:
         for app in apps:
             app_icons = apps[app]["icons"]
@@ -417,6 +432,8 @@ def install(fix_only):
             if app_dbfile in ("google-chrome", "chromium"):
                 pak_file = app_icons[0][3]
                 apps[app]["icons"] = get_correct_chrome_icons(apps[app], pak_file)
+                print(apps[app]["icons"])
+                exit()
                 dont_install = not apps[app]["icons"]
             icon_ctr = 1
             while icon_ctr <= len(app_icons) and not dont_install:
@@ -530,48 +547,51 @@ def install(fix_only):
     else:
         exit("No apps to fix! Please report on GitHub if this is not the case")
 
-if detect_de() in ("pantheon", "xfce"):
-    default_icon_size = 24
 
-fix_only = False
-if len(argv) > 1 and argv[1] == "--only":
-    if len(argv) > 2:
-        fix_only = argv[2].lower().strip().split(",")
-    else:
-        fix_only = False
+if __name__=="__main__":
+    if detect_de() in ("pantheon", "xfce"):
+        default_icon_size = 24
 
-choice = None
-if len(argv) > 1 and argv[1] == "--travis":
-    choice = 1
+    fix_only = False
 
-print("Welcome to the tray icons hardcoder fixer!")
-print("Your indicator icon size is : %s" % default_icon_size)
-if gsettings:
-    print("Your current icon theme is : %s" % theme_name)
-print("Svg to png functions are : ", end="")
-print("Enabled" if svgtopng.is_svg_enabled() else "Disabled")
-print("Applications will be fixed : ", end="")
-print(",".join(fix_only) if fix_only else "All")
-print("1 - Apply")
-print("2 - Revert")
+    if len(argv) > 1 and argv[1] == "--only":
+        if len(argv) > 2:
+            fix_only = argv[2].lower().strip().split(",")
+        else:
+            fix_only = False
 
-try:
-    if not choice:
-        choice = int(input("Please choose: "))
-    if choice == 1:
-        print("Applying now..\n")
-        install(fix_only)
-    elif choice == 2:
-        print("Reverting now..\n")
-        reinstall(fix_only)
-    else:
-        exit("Please try again")
-except ValueError:
-    exit("Please choose a valid value!")
+    choice = None
+    if len(argv) > 1 and argv[1] == "--travis":
+        choice = 1
 
-if len(script_errors) != 0:
-    for err in script_errors:
-        err = err.decode("utf-8")
-        err = "\n".join(["\t" + e for e in err.split("\n")])
-        print("fixing failed with error:\n%s" % err)
-print("\nDone , Thank you for using the Hardcode-Tray fixer!")
+    print("Welcome to the tray icons hardcoder fixer!")
+    print("Your indicator icon size is : %s" % default_icon_size)
+    if gsettings:
+        print("Your current icon theme is : %s" % theme_name)
+    print("Svg to png functions are : ", end="")
+    print("Enabled" if svgtopng.is_svg_enabled() else "Disabled")
+    print("Applications will be fixed : ", end="")
+    print(",".join(fix_only) if fix_only else "All")
+    print("1 - Apply")
+    print("2 - Revert")
+
+    try:
+        if not choice:
+            choice = int(input("Please choose: "))
+        if choice == 1:
+            print("Applying now..\n")
+            install(fix_only)
+        elif choice == 2:
+            print("Reverting now..\n")
+            reinstall(fix_only)
+        else:
+            exit("Please try again")
+    except ValueError:
+        exit("Please choose a valid value!")
+
+    if len(script_errors) != 0:
+        for err in script_errors:
+            err = err.decode("utf-8")
+            err = "\n".join(["\t" + e for e in err.split("\n")])
+            print("fixing failed with error:\n%s" % err)
+    print("\nDone , Thank you for using the Hardcode-Tray fixer!")

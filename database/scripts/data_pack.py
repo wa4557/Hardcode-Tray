@@ -105,11 +105,11 @@ def WriteDataPack(resources, output_file, encoding):
 def main():
     if len(sys.argv) == 2:
         filename = sys.argv[1]
+        ex_path = os.path.split(os.path.realpath(__file__))[0]
         data = ReadDataPack(filename)
         for (resource_id, text) in data.resources.items():
             pathfile = os.path.split(filename)[0]
-            os.makedirs(os.path.dirname(pathfile+'/extracted/'), exist_ok=True)
-            f = open(pathfile+'/extracted/'+str(resource_id), "wb")
+            f = open(ex_path+"/"+str(resource_id), "wb")
             f.write(text)
             f.close()
     elif len(sys.argv) > 2:
