@@ -466,7 +466,7 @@ def install(fix_only, custom_path):
     """
     apps = get_apps_informations(fix_only, custom_path)
     if len(apps) != 0:
-        for app in apps:
+        for app_counter, app in enumerate(apps):
             app_path = apps[app]["path"]
             app_dbfile = apps[app]["dbfile"]
             app_name = apps[app]["name"]
@@ -477,6 +477,12 @@ def install(fix_only, custom_path):
             app_icons = apps[app]["icons"]
             icon_ctr = 1
             while (not dont_install) and (icon_ctr <= len(app_icons)):
+                if icon_ctr == 1:
+                    script_value = 0
+                elif icon_ctr == len(app_icons):
+                    script_value = -1
+                else:
+                    script_value = 1
                 icon = app_icons[icon_ctr - 1]
                 icon_size = get_icon_size(icon)
                 is_script = False
@@ -569,7 +575,7 @@ def install(fix_only, custom_path):
                                 if path.isfile(sfile):
                                     backup(app_path + icon[3])
                                     execute([sfile, fname, symlink_icon,
-                                             app_path, icon[3]])
+                                             app_path, icon[3], str(script_value)])
                                 else:
                                     script_errors.append("%s -- script file"
                                                          "does not exists" %
@@ -580,7 +586,6 @@ def install(fix_only, custom_path):
                                       (app_name, fbase))
                                 fixed_icons.append(fbase)
                 icon_ctr += 1
-
     else:
         exit("No apps to fix! Please report on GitHub if this is not the case")
 
