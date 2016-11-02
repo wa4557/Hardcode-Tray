@@ -1,0 +1,28 @@
+#!/bin/bash
+
+cmd_path=$(which hardcode-tray)
+if [ $? -ne 0 ]; then
+    path="."
+else
+    path=$(dirname $(realpath "$cmd_path"))
+fi
+cd "$path"/database/scripts
+
+if [ $5 -eq 0 ] || [ $5 -eq 2 ]; then
+    rm -rf "/tmp/$4/"
+    mkdir -p "/tmp/$4/"
+    unzip "$3""$4" -d "/tmp/$4/"
+fi
+
+if [[ $1 == *.svg ]]; then
+    python3 svgtopng.py "$1" "/tmp/$4/""$2"
+else
+    cp "$1" "/tmp/$4""$2"
+fi
+
+if [ $5 -eq -1 ] || [ $5 -eq 2 ]; then
+    zip -r "/tmp/$4.nw" "/tmp/$4/"
+    rm -rf "/tmp/$4/"
+    chmod +x "/tmp/$4.nw"
+    mv "/tmp/$4.nw" "$3""$4"
+fi

@@ -518,7 +518,8 @@ def install(fix_only, custom_path):
             app_dbfile = apps[app]["dbfile"]
             app_name = apps[app]["name"]
             app_icons = apps[app]["icons"]
-            for icon in app_icons:
+            script_bool = False
+            for ctr, icon in enumerate(app_icons):
                 fixed = False
                 base_icon = icon["base_icon"]
                 ext_orig = icon["ext_orig"]
@@ -556,10 +557,10 @@ def install(fix_only, custom_path):
                         print("Hardcoded file has to be svg or png.\
                             \nOther formats are not supported yet")
                         continue
-                # Qt applications
                 else:
                     script_file = icon["script_file"]
                     if svgtopng.is_svg_enabled():
+                       # Qt applications
                        if qt_script in script_file:
                           sni_qt_pre = apps[app].get("sniqtprefix", app)
                           sni_qt_path = sni_qt_folder + sni_qt_pre + "/"
@@ -586,9 +587,19 @@ def install(fix_only, custom_path):
                             binary = icon["binary"]
                             if path.isfile(script_file):
                                 backup(app_path + binary)
+                                if not script_bool and ctr == len(app_icons) - 1:
+                                    script_do = 2
+                                elif not script_bool:
+                                    script_do = 0
+                                    script_bool = True
+                                elif ctr == len(app_icons) - 1:
+                                    script_do = -1
+                                else:
+                                    script_do = 1
                                 execute([script_file, fname, base_icon,
-                                         app_path, binary])
+                                         app_path, binary, script_do])
                                 fixed = True
+                                
                             else:
                                 script_errors.append("%s -- script file"
                                                      "does not exists" %
