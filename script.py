@@ -597,7 +597,7 @@ def install(fix_only, custom_path):
                                 else:
                                     script_do = 1
                                 execute([script_file, fname, base_icon,
-                                         app_path, binary, script_do])
+                                         app_path, binary, str(script_do)])
                                 fixed = True
                                 
                             else:
