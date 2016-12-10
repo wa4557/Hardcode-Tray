@@ -215,6 +215,7 @@ def replace_vars_path(path, exec_path_script):
                             to be executed. Used in some cases like Dropbox
     """
     path = path.replace("{userhome}", userhome)
+    path = path.replace("{size}", str(default_icon_size))
     if exec_path_script:
         sfile = absolute_path + db_folder + script_folder + exec_path_script
         path = execute([sfile, path], verbose=True).decode("utf-8").strip()
@@ -376,6 +377,7 @@ def symlink_file(source, link_name):
         remove(link_name)
         symlink(source, link_name)
     except FileNotFoundError:
+        
         pass
 
 
@@ -468,10 +470,12 @@ def install(fix_only, custom_path):
                 ext_theme = icon["theme_ext"]
                 for icon_path in icons_path:
                     if app["is_qt"]:
-                        if svgtopng.is_svg_enabled():
-                            output_icon = icon_path + base_icon
-                            svgtopng.convert_svg2png(fname, output_icon)
-                            mchown(output_icon)
+                        output_icon = icon_path + base_icon
+                        symlink_file(fname, output_icon + '.' + ext_theme)
+                        if "symlinks" in icon.keys():
+                            for symlink_icon in icon["symlinks"]:
+                                symlink_icon = icon_path + symlink_icon
+                                symlink_file(output_icon + '.' + ext_theme, symlink_icon + '.' + ext_theme)
                     elif app["is_script"]:
                         binary = app["binary"]
                         if path.exists(icon_path + binary):
